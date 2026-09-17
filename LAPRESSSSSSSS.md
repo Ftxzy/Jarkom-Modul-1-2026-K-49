@@ -200,6 +200,9 @@ Script setup disimpan di `/root/setup_ftp.sh` untuk persistensi.
 
 ## Nomor 8 — Knights Upload Dokumen Intelijen ke FTP Chisa
 
+<img width="961" height="1012" alt="no8" src="https://github.com/user-attachments/assets/3298b27a-17c1-4416-af99-2f9acbf90656" />
+
+
 Knights menghubungkan FTP client ke Chisa menggunakan akun alice:
 
 ```bash
