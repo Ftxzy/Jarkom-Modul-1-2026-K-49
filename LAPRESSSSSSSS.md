@@ -2,6 +2,7 @@
 **Komdat Jarkom 2026 | Kelompok K-49 Grup C | Prefix IP: 10.88.x.x**
 
 dikerjakan oleh :
+
 **Khalifa Suryadinarta** - **5027251104**
 
 **Aura Syahzanani A** - **5027251123**
