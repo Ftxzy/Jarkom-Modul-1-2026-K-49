@@ -344,7 +344,7 @@ nc -zv 10.88.3.2 7777  # Connection refused
 
 ---
 
-## Nomor 13 — SSH Key-Based Authentication Mika → Knights
+## Nomor 13 - SSH Key-Based Authentication Mika → Knights
 
 **Setup di Knights:**
 ```bash
@@ -377,6 +377,50 @@ PubkeyAuthentication yes
 ```bash
 ssh mika_admin@10.88.3.2
 ```
+
+**Penjelasan Script**
+Dikarenakan Sudah mendapatkan public key, disini dibikinkan shellscript untuk saat server di restart agar menghindari setup yang dilakukan di atas
+```
+#!/bin/sh
+apk add openssh --quiet
+if [ ! -f /root/ssh_host_rsa_key ]; then
+    ssh-keygen -A
+    cp /etc/ssh/ssh_host_*key* /root/
+else
+    cp /root/ssh_host_*key* /etc/ssh/
+fi
+adduser -D mika_admin
+echo "mika_admin:123" | chpasswd
+mkdir -p /home/mika_admin/.ssh
+echo "ssh-rsa AAAA..." > /home/mika_admin/.ssh/authorized_keys
+chmod 600 /home/mika_admin/.ssh/authorized_keys
+chown -R mika_admin:mika_admin /home/mika_admin/.ssh
+sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config
+/usr/sbin/sshd
+
+```
+Blok if [ ! -f /root/ssh_host_rsa_key ]
+
+```
+if [ ! -f /root/ssh_host_rsa_key ]; then
+    ssh-keygen -A
+    cp /etc/ssh/ssh_host_*key* /root/
+else
+    cp /root/ssh_host_*key* /etc/ssh/
+fi
+```
+
+Blok ini menangani persistensi host key agar fingerprint Knights tidak berubah setiap restart.
+
+[ ! -f /root/ssh_host_rsa_key ] — cek apakah file host key belum ada di /root/
+! = NOT, -f = file exists
+Jika belum ada: generate host key baru dengan ssh-keygen -A, lalu copy ke /root/ untuk disimpan
+Jika sudah ada: copy host key yang tersimpan dari /root/ kembali ke /etc/ssh/ di mana sshd membutuhkannya
+Mengapa penting: tanpa ini, setiap restart Knights menghasilkan host key baru → fingerprint berubah → Mika2 mendapat peringatan "REMOTE HOST IDENTIFICATION HAS CHANGED"
+
+ssh-keygen -A — generate semua tipe host key sekaligus (RSA, ECDSA, ED25519). Host key adalah identitas server, bukan identitas user.
+
 
 **Analisis Wireshark (filter: `ssh`):**
 
