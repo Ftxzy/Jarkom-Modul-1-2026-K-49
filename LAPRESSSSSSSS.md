@@ -452,7 +452,7 @@ Paket sukses itu ditelusuri lebih dalam dengan klik kanan → **Follow → HTTP 
 | Password berhasil | `wired_pr0tocol_7` |
 | Web server | `Apache/2.4.62` |
 
-# Validasi Socket Server
+### Validasi Socket Server
 ```
 nc [IP_Group] 3401   
 ```
@@ -493,7 +493,7 @@ Karena membaca puluhan paket satu-satu tidak efisien, seluruh paket di-*export* 
 | Device Address | `7` |
 | Pesan rahasia | `Wired_Protocol_7_is_alive_2026` |
 
-# Validasi Socket Server
+### Validasi Socket Server
 ```
 nc [IP_Group] 3402
 ```
@@ -531,7 +531,7 @@ Di awal sesi terlihat baris `Response: 220 Welcome to Wired FTP Server (vsftpd 3
 | Kredensial | `knights_agent` / `N4v1_s3cur3_2026` |
 | Ukuran file malware | `524288 bytes` |
 
-# Validasi Socker Server
+### Validasi Socker Server
 ```
 nc [IP_Group] 3403  
 ```
@@ -568,7 +568,7 @@ Untuk kode status, digunakan petunjuk `[Response in frame: 31]` yang ada di deta
 | File executable | `navi_agent.exe` |
 | Kode status HTTP | `200 OK` |
 
-# Validasi Socket Server
+### Validasi Socket Server
 ```
 nc [IP_Group] 3404
 ```
@@ -598,7 +598,7 @@ mulai dari `Negotiate Protocol`, `Session Setup`, kemudian `Tree Connect Request
 | Folder tujuan | `System32` (via share `ADMIN$`) |
 | File malware | `wired_trojan_payload.exe` |
 
-# Validasi Socket Server
+### Validasi Socket Server
 ```
 nc [IP_Group] 3405 
 ```
@@ -639,7 +639,7 @@ isinya jelas berupa ancaman: klaim password bocor (`pr0tocol_7_user`), klaim inf
 - **IP Server SMTP**: `203.0.113.100` (`mail.protocol7.co.jp`, Postfix)
 - **Tuntutan**: 2 BTC ke alamat `bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh`
 
-# Validasi Socket Server
+### Validasi Socket Server
 ```
 nc [IP_Group] 3406   # Soal 19 ✓
 ```
@@ -675,7 +675,7 @@ Paket HTTP yang muncul diklik kanan → **Follow → TLS Stream**, menampilkan r
 | User-Agent | `curl/7.62.0` |
 | HTTP Method & Path | `HEAD /` |
 
-## Validasi Socket Server
+### Validasi Socket Server
 ```
 nc [IP_Group] 3407   
 ```
