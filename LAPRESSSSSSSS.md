@@ -5,7 +5,7 @@
 
 ## Topologi Jaringan
 
-![[Whole GNS.png]]
+<img width="922" height="653" alt="Whole GNS" src="https://github.com/user-attachments/assets/dbfca1f5-5697-4c4f-b635-ff00067fd5c2" />
 
 ---
 
@@ -133,7 +133,8 @@ echo "=== NAT Table Status ==="
 iptables -t nat -L -v -n
 ```
 
-![[screenshot-20260917-002428.png]]
+<img width="917" height="560" alt="screenshot-20260917-002428" src="https://github.com/user-attachments/assets/20cdd846-ba47-42a7-b305-f8d38b391379" />
+
 
 Script dipanggil dengan `/root/cek_status.sh` dan menampilkan:
 - Status semua interface beserta IP address
@@ -152,7 +153,8 @@ dns || icmp
 
 **Hasil:**
 
-![[screenshot-20260917-003210.png]]
+<img width="1920" height="1080" alt="screenshot-20260917-003210" src="https://github.com/user-attachments/assets/702bdd48-cc65-46d3-9daa-77f326ba72f3" />
+
 
 - Total paket: 50
 - Paket DNS dan ICMP: 45 (90%)
@@ -190,18 +192,17 @@ Script setup disimpan di `/root/setup_ftp.sh` untuk persistensi.
 
 **Bukti konfigurasi:**
 - Alice berhasil membuat `signal_alice.txt` di `/var/wired/data`
-	![[screenshot-20260917-003939.png]] 
+	<img width="920" height="332" alt="screenshot-20260917-003939" src="https://github.com/user-attachments/assets/73819193-4cdb-4b94-afd8-5d92a217bbf6" />
+
 - Mika hanya bisa read
-	![[screenshot-20260917-004257.png]]
-  
+	<img width="949" height="346" alt="screenshot-20260917-004257" src="https://github.com/user-attachments/assets/c54fb743-49f1-4afc-9642-a1a18c92cde0" />
+
 - Eiri ditolak saat mencoba login 
-	![[screenshot-20260917-005024.png]]
+	<img width="640" height="153" alt="screenshot-20260917-005024" src="https://github.com/user-attachments/assets/5aa880ba-73b0-42f1-bcd6-88a9aefd7708" />
+
 ---
 
 ## Nomor 8 — Knights Upload Dokumen Intelijen ke FTP Chisa
-
-<img width="961" height="1012" alt="no8" src="https://github.com/user-attachments/assets/3298b27a-17c1-4416-af99-2f9acbf90656" />
-
 
 Knights menghubungkan FTP client ke Chisa menggunakan akun alice:
 
@@ -213,7 +214,8 @@ put /root/knights_report.txt
 
 **Analisis Wireshark (filter: `ftp || ftp-data`):**
 
-![[Pasted image 20260917011530.png]]
+<img width="961" height="1012" alt="Pasted image 20260917011530" src="https://github.com/user-attachments/assets/83f0ef3b-f324-473a-a55d-77a053ddaed6" />
+
 
 | Elemen          | Nilai                                          |
 | --------------- | ---------------------------------------------- |
@@ -227,9 +229,10 @@ put /root/knights_report.txt
 ## Nomor 9 — Mika Mengakses Protocol 7 dari FTP Chisa
 
 Mika mengunduh `protocol7.txt` dari FTP server Chisa:
-![[Pasted image 20260917012226.png]]
+<img width="910" height="254" alt="Pasted image 20260917012226" src="https://github.com/user-attachments/assets/255bafe2-4260-4076-89ce-123ceda8f3c6" />
 
-![[Pasted image 20260917012242.png]]
+<img width="917" height="78" alt="Pasted image 20260917012422" src="https://github.com/user-attachments/assets/b6561323-1590-403d-a18d-f3b4dfcef908" />
+
 
 ```bash
 lftp -u mika,mika1234 10.88.2.2
@@ -239,7 +242,9 @@ put /etc/hostname          # gagal (553 Permission denied)
 ```
 
 **Hasil:** Pembatasan read-only terbukti — Mika dapat download tapi tidak bisa upload.
-![[Pasted image 20260917012144.png]]
+
+<img width="954" height="1006" alt="Pasted image 20260917012144 (1)" src="https://github.com/user-attachments/assets/2f3c97fe-2e6f-4fa6-be17-3f0fcfe39d20" />
+
 
 ---
 
@@ -250,9 +255,9 @@ ping -c 77 -s 128 -i 0.3 10.88.2.2
 ```
 
 **Analisis Wireshark (filter: `icmp`):**
-![[Pasted image 20260917012327.png]]
+<img width="1600" height="415" alt="Pasted image 20260917012327" src="https://github.com/user-attachments/assets/33127a87-92a3-48c0-8e0c-5c4b19dd2450" />
 
-![[Pasted image 20260917012349.png]]
+<img width="1600" height="420" alt="Pasted image 20260917012349" src="https://github.com/user-attachments/assets/b59a8779-c3e5-4e22-a79e-2fb4f01441cb" />
 
 
 
@@ -263,7 +268,8 @@ ping -c 77 -s 128 -i 0.3 10.88.2.2
 | Panjang paket  | 170 bytes (128 payload + 42 header) |
 
 **Statistik ping:**
-![[Pasted image 20260917012422.png]]
+<img width="917" height="78" alt="Pasted image 20260917012422 (1)" src="https://github.com/user-attachments/assets/8b98f976-9a08-4d72-a753-5d2fdbad2ab1" />
+
 
 ---
 
@@ -285,9 +291,10 @@ telnet 10.88.2.2
 
 **Analisis Wireshark (Follow TCP Stream):**
 
-![[Pasted image 20260917012442.png]]
+<img width="917" height="78" alt="Pasted image 20260917012422 (1)" src="https://github.com/user-attachments/assets/b39423b1-68bf-4d01-a4be-67b65c04bbb0" />
 
-![[Pasted image 20260917012456.png]]
+<img width="958" height="506" alt="Pasted image 20260917012456" src="https://github.com/user-attachments/assets/0335b34b-15f2-4418-8472-c86e37ff8ab3" />
+
 
 Kredensial `phantom_user` dan `wired_ghost` terlihat jelas dalam plaintext di TCP stream.
 
@@ -315,11 +322,12 @@ nc -zv 10.88.3.2 7777  # Connection refused
 
 **Analisis Wireshark (filter: `tcp && ip.addr == 10.88.3.2`):**
 
-![[Pasted image 20260917012605.png]]
+<img width="1600" height="420" alt="Pasted image 20260917012605" src="https://github.com/user-attachments/assets/ce929165-6ab3-4978-a9fc-fb267a3eae6b" />
 
-![[Pasted image 20260917012617.png]]
+<img width="1600" height="424" alt="Pasted image 20260917012617" src="https://github.com/user-attachments/assets/b73f525a-4e56-4596-958e-9a8bfae03191" />
 
-![[Pasted image 20260917012522.png]]
+<img width="1600" height="420" alt="Pasted image 20260917012522" src="https://github.com/user-attachments/assets/e05e9f93-9ba0-4d7f-8e94-0dd617439e10" />
+
 
 
 | Port | Response TCP Flag | Arti                    |
@@ -366,7 +374,8 @@ ssh mika_admin@10.88.3.2
 
 **Analisis Wireshark (filter: `ssh`):**
 
-![[Pasted image 20260917012652.png]]
+<img width="954" height="1008" alt="Pasted image 20260917012652" src="https://github.com/user-attachments/assets/b9bde793-e200-49b4-92ef-31de2c9ba286" />
+
 
 | Paket                     | Keterangan                                    |
 |---------------------------|-----------------------------------------------|
