@@ -423,3 +423,271 @@ ifup eth0
 | telnetd     | Telnet server di Chisa (demo kelemahan) |
 | tshark      | CLI Wireshark untuk analisis pcapng     |
 
+## Soal 14 — Brute-Force Login Web
+**File**: `wired_bruteforce.pcapng`
+
+### Apa yang terjadi
+Eiri melancarkan serangan *brute-force* otomatis ke form login web milik Alice, mencoba berbagai kombinasi password terhadap satu username tetap secara berulang.
+
+### Cara pembuktian
+
+<img width="1918" height="1009" alt="image" src="https://github.com/user-attachments/assets/cf6d1e35-af53-478f-aa92-3a2ab25270aa" />
+
+Filter `http.request.method == "POST"` diterapkan untuk menampilkan seluruh percobaan login ke endpoint `/login.php`. Terlihat puluhan permintaan POST beruntun dari IP yang sama — pola khas serangan otomatis, bukan login manual manusia. 
+
+Untuk menemukan percobaan yang **berhasil**, filter diganti menjadi `http.response`, yang menampilkan pola: puluhan respons `401 Unauthorized` diikuti **satu** respons `200 OK` di paket paling akhir. 
+
+<img width="1897" height="951" alt="image" src="https://github.com/user-attachments/assets/09882ee2-eb19-48c9-bdf4-2f61f53c6b2d" />
+
+
+Paket sukses itu ditelusuri lebih dalam dengan klik kanan → **Follow → HTTP Stream**, yang menampilkan payload request lengkap (`username=lain_admin&password=...`) beserta response HTML `Success! Login successful.` Dari header response juga terbaca `Server: Apache/2.4.62` dan `X-Powered-By: PHP/8.3.14`. Header `User-Agent` pada setiap request POST juga mengungkap tool yang dipakai: `Fuzz Faster U Fool v2.1.0-dev` (ffuf).
+
+<img width="1354" height="1012" alt="image" src="https://github.com/user-attachments/assets/738028c5-e0fd-4541-8c71-a803e89dabe3" />
+
+### Temuan
+| Item | Hasil |
+|---|---|
+| IP Penyerang | `172.26.7.50` |
+| IP Target : Port | `172.26.7.100 : 8080` |
+| Password berhasil | `wired_pr0tocol_7` |
+| Web server | `Apache/2.4.62` |
+
+# Validasi Socket Server
+```
+nc [IP_Group] 3401   
+```
+
+<img width="1192" height="604" alt="image" src="https://github.com/user-attachments/assets/8e864b90-cd9f-4375-bed2-62020f9a1782" />
+
+---
+## Soal 15 — Keylogger USB HID
+**File**: `wired_usb_hid.pcap`
+
+### Apa yang terjadi
+Eiri memasang keyboard USB berbahaya (fisik) pada node Alice yang merekam setiap ketukan tombol (keystroke) dan mengirimkannya diam-diam.
+
+### Cara pembuktian
+Filter `usb.idVendor || usb.idProduct` menampilkan paket **Device Descriptor** — respons awal saat perangkat USB pertama kali dikenali sistem.
+
+<img width="1918" height="1008" alt="image" src="https://github.com/user-attachments/assets/c811d6a8-ddd7-4634-bdd3-d97a4fd59c2a" />
+
+Di dalam paket ini terbaca `idVendor: Logitech, Inc. (0x046d)` dan `idProduct: Keyboard K120 (0xc31c)`. Nomor **Device Address** ditemukan dengan filter `usb.device_address != 0`, menunjukkan angka `7`.
+
+<img width="946" height="424" alt="image" src="https://github.com/user-attachments/assets/51ab616e-80b8-4879-967c-e27977262cc8" />
+
+
+<img width="1039" height="546" alt="image" src="https://github.com/user-attachments/assets/cae6187d-ecf9-4999-af60-688c6dad7eea" />
+
+Untuk membaca pesan rahasia, filter diganti ke `usb.capdata` yang menampilkan seluruh paket data mentah HID (`Leftover Capture Data`, 8 byte per paket: byte pertama = modifier/Shift, byte ketiga = kode tombol). 
+
+Karena membaca puluhan paket satu-satu tidak efisien, seluruh paket di-*export* via **File → Export Packet Dissections → As Plain Text**, lalu diolah otomatis: setiap kode HID (misal `0x1a`) dicocokkan ke tabel HID Usage ID standar (`0x1a` = huruf **w**), dan modifier `0x02` (Shift) menandai huruf tersebut ditulis kapital. Hasil rangkaian huruf membentuk kalimat utuh.
+
+<img width="624" height="409" alt="image" src="https://github.com/user-attachments/assets/56c76d08-2441-4e5c-b4f0-9f3b3ea4580a" />
+
+<img width="615" height="479" alt="image" src="https://github.com/user-attachments/assets/efa9625a-67a4-49c6-b43d-7e8eeb333918" />
+
+### Temuan
+| Item | Hasil |
+|---|---|
+| Vendor ID / Product ID | `0x046d` / `0xc31c` (Logitech K120) |
+| Device Address | `7` |
+| Pesan rahasia | `Wired_Protocol_7_is_alive_2026` |
+
+# Validasi Socket Server
+```
+nc [IP_Group] 3402
+```
+
+<img width="1234" height="576" alt="image" src="https://github.com/user-attachments/assets/80d022ab-0f9f-4edf-a43b-86f5d38d006d" />
+
+---
+
+## Soal 16 — Pencurian File via FTP
+**File**: `wired_ftp_theft.pcapng`
+
+### Apa yang terjadi
+Eiri menaruh file malware di server FTP miliknya sendiri, lalu file tersebut diunduh dari sistem korban (Knights).
+
+### Cara pembuktian
+Karena capture berisi beberapa sesi FTP berbeda (percobaan login legit dan sesi berbahaya bercampur), pencarian dipersempit dengan filter `ftp contains "knights_payload"`. 
+
+<img width="1918" height="982" alt="image" src="https://github.com/user-attachments/assets/80a5791c-80cd-4c19-bca7-7baf69a740af" />
+
+
+Filter ini langsung menunjukkan 3 paket kunci: request `SIZE knights_payload.exe`, request `RETR knights_payload.exe` (perintah download), dan respons server `150 Opening BINARY mode data connection for knights_payload.exe (524288 bytes)` — dari sinilah ukuran file diketahui secara eksplisit tanpa perlu menghitung manual.
+
+Untuk mengetahui banner server dan kredensial login, sesi yang sama ditelusuri balik ke awal menggunakan filter `ip.addr == 198.51.100.7 && ftp`.
+
+<img width="1911" height="721" alt="image" src="https://github.com/user-attachments/assets/4a92004d-1089-4b66-8141-77bcdd8c6e5c" />
+
+
+Di awal sesi terlihat baris `Response: 220 Welcome to Wired FTP Server (vsftpd 3.0.5)` sebagai banner, diikuti `Request: USER knights_agent` dan `Request: PASS N4v1_s3cur3_2026` sebagai kredensial yang dipakai.
+
+### Temuan
+| Item | Hasil |
+|---|---|
+| IP Server FTP penyerang | `198.51.100.7` |
+| Banner software | `vsftpd 3.0.5` |
+| Kredensial | `knights_agent` / `N4v1_s3cur3_2026` |
+| Ukuran file malware | `524288 bytes` |
+
+# Validasi Socker Server
+```
+nc [IP_Group] 3403  
+```
+
+<img width="1228" height="573" alt="image" src="https://github.com/user-attachments/assets/276b10e3-f964-4bed-96ef-988c464283f2" />
+
+---
+
+## Soal 17 — HTTP C2 Download Malware
+**File**: `wired_http_c2.pcap`
+
+### Apa yang terjadi
+Alice membuat halaman web, dan Eiri memanfaatkan celah di halaman itu agar sistem Alice otomatis mengunduh file executable berbahaya dari server C2 (Command & Control) miliknya.
+
+### Cara pembuktian
+Filter `http.request` menampilkan 3 request GET dalam capture; dua di antaranya request normal (`/style.css`, `/`), dan satu lagi mencurigakan: `GET /navi_agent.exe HTTP/1.1`.
+
+<img width="1918" height="885" alt="image" src="https://github.com/user-attachments/assets/f69c3722-c3a4-49c3-b10f-f899cea5c01c" />
+
+Paket ini diklik untuk melihat detail header, dan langsung terbaca `Host: wired-update.net` serta baris otomatis Wireshark `[Full request URI: http://wired-update.net/navi_agent.exe]`.
+
+<img width="954" height="427" alt="image" src="https://github.com/user-attachments/assets/68e74b91-9c02-4d02-b5cd-9f8ae4960b86" />
+
+Untuk kode status, digunakan petunjuk `[Response in frame: 31]` yang ada di detail paket — klik untuk lompat langsung ke paket respons, yang menunjukkan `HTTP/1.1 200 OK` dengan header `Content-Disposition: attachment; filename="navi_agent.exe"`, mengonfirmasi file benar-benar terkirim sebagai unduhan.
+
+<img width="954" height="427" alt="image" src="https://github.com/user-attachments/assets/01ab1da3-e56d-41cc-be49-3fb424e981cd" />
+
+
+### Temuan
+| Item | Hasil |
+|---|---|
+| Domain (Host) | `wired-update.net` |
+| IP server penyerang | `203.0.113.42` |
+| File executable | `navi_agent.exe` |
+| Kode status HTTP | `200 OK` |
+
+# Validasi Socket Server
+```
+nc [IP_Group] 3404
+```
+
+<img width="1273" height="571" alt="image" src="https://github.com/user-attachments/assets/a3b1e102-eb5c-47cb-8204-f7481b711fb3" />
+
+---
+
+## Soal 18 — Penanaman Malware via SMB
+**File**: `wired_smb_transfer.pcapng`
+
+### Apa yang terjadi
+Eiri mengganti taktik dengan menanamkan file malware langsung ke sistem korban menggunakan protokol *file sharing* SMB (umum dipakai untuk berbagi file di jaringan Windows).
+
+### Cara pembuktian
+Filter `smb2 || smb` langsung menampilkan seluruh alur transaksi secara berurutan dan sudah cukup jelas dari kolom **Info** tanpa perlu Follow Stream
+
+<img width="1918" height="1044" alt="image" src="https://github.com/user-attachments/assets/4e8dc742-8c4f-4b04-b545-559efe4dbf2d" />
+
+mulai dari `Negotiate Protocol`, `Session Setup`, kemudian `Tree Connect Request, Tree: '\\10.7.1.50\ADMIN$'` — ini bagian penting, karena `ADMIN$` adalah *share* administratif tersembunyi Windows yang hanya bisa diakses dengan kredensial admin, indikasi penyerang sudah memiliki akses istimewa. Diikuti `Create Request, File: System32\wired_trojan_payload.exe` dan `Write Request Len:1028 ... File: System32\wired_trojan_payload.exe` yang menunjukkan proses penulisan file malware langsung ke folder sistem korban.
+
+### Temuan
+| Item | Hasil |
+|---|---|
+| Protokol dieksploitasi | SMB2 |
+| IP Pengirim → Penerima | `10.7.3.100` → `10.7.1.50` |
+| Folder tujuan | `System32` (via share `ADMIN$`) |
+| File malware | `wired_trojan_payload.exe` |
+
+# Validasi Socket Server
+```
+nc [IP_Group] 3405 
+```
+
+<img width="1213" height="691" alt="image" src="https://github.com/user-attachments/assets/c7d10851-e516-4ea0-a2cf-42191cce3df9" />
+
+---
+
+## Soal 19 — Email Pemerasan via SMTP
+**File**: `wired_smtp_threat.pcap`
+
+### Apa yang terjadi
+Eiri mengirim email pemerasan (ransomware note) melalui SMTP tanpa enkripsi, mengancam akan membocorkan data korban jika tidak membayar tebusan.
+
+### Cara pembuktian
+Filter `smtp` menampilkan beberapa sesi email berbeda dalam satu capture (ada 3 pasangan IP yang saling berkomunikasi).
+
+<img width="1918" height="991" alt="image" src="https://github.com/user-attachments/assets/01f5490e-1d89-434f-b389-80524f441233" />
+
+Karena isi email tidak langsung terlihat dari list paket, setiap sesi ditelusuri satu per satu dengan klik kanan paket → **Follow → TCP Stream**, dicoba stream demi stream sampai ditemukan stream dari `185.234.72.19` (`attacker@darkwired.net`) menuju `203.0.113.100` (server `mail.protocol7.co.jp`, Postfix) 
+
+<img width="1153" height="849" alt="image" src="https://github.com/user-attachments/assets/25331def-29c6-44ba-ad86-36c666945306" />
+
+
+isinya jelas berupa ancaman: klaim password bocor (`pr0tocol_7_user`), klaim infeksi *ransomware*, tuntutan pembayaran 2 BTC, batas waktu **72 jam (3 hari)**, dan baris `MailClientID: 7719980706` di bagian akhir pesan.
+
+
+### Temuan
+| Item | Hasil |
+|---|---|
+| Email korban | `victim@protocol7.co.jp` |
+| Password diklaim bocor | `pr0tocol_7_user` |
+| Jenis malware | Ransomware |
+| Batas waktu | 72 jam (3 hari) |
+| MailClientID | `7719980706` |
+
+- **IP Penyerang**: `185.234.72.19` (dari `attacker@darkwired.net`)
+- **IP Server SMTP**: `203.0.113.100` (`mail.protocol7.co.jp`, Postfix)
+- **Tuntutan**: 2 BTC ke alamat `bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh`
+
+# Validasi Socket Server
+```
+nc [IP_Group] 3406   # Soal 19 ✓
+```
+
+<img width="1231" height="682" alt="image" src="https://github.com/user-attachments/assets/afb7bb9b-d625-41dd-98b8-bfa58ccfad0d" />
+
+---
+
+## Soal 20 — Komunikasi Malware via TLS Terenkripsi
+**File**: `wired_tls_decrypt.pcapng` + `keyslogfile.txt`
+
+### Apa yang terjadi
+Sebagai taktik terakhir, Eiri menyembunyikan komunikasi malware (C2 beacon) di balik kanal HTTPS/TLS agar tidak mudah dicurigai sebagai traffic berbahaya.
+
+### Cara pembuktian
+Karena traffic terenkripsi, langkah pertama adalah mendaftarkan file `keyslogfile.txt` ke Wireshark melalui **Edit → Preferences → Protocols → TLS → (Pre)-Master-Secret log filename**. Setelah keylog terpasang, filter `tls.handshake.type == 1` menampilkan paket **Client Hello**, yang detailnya langsung menunjukkan `TLSv1.2` sebagai versi protokol dan `SNI=example.com` sebagai domain tujuan.
+
+<img width="1918" height="969" alt="image" src="https://github.com/user-attachments/assets/4c43270e-715f-45d0-a61c-eb252db84693" />
+
+Untuk membuktikan dekripsi berhasil, filter diganti ke `http` — jika keylog berhasil diterapkan, Wireshark otomatis menampilkan isi HTTP asli di balik enkripsi TLS (ditandai tab tambahan **"Decrypted TLS"** di panel bawah).
+
+<img width="1918" height="996" alt="image" src="https://github.com/user-attachments/assets/db1d09db-c5d4-4496-afeb-70df2982eab2" />
+
+
+Paket HTTP yang muncul diklik kanan → **Follow → TLS Stream**, menampilkan request lengkap: `HEAD / HTTP/1.1` dengan header `User-Agent: curl/7.62.0` — User-Agent ini mencurigakan karena menandakan traffic dibuat oleh script/tool otomatis, bukan browser manusia biasa, ciri khas *beacon* C2 yang menyamar sebagai traffic HTTPS normal.
+
+### Temuan
+| Item | Hasil |
+|---|---|
+| Versi TLS | TLS 1.2 |
+| Domain (SNI) | `example.com` |
+| IP Server HTTPS | `93.184.216.34` |
+| User-Agent | `curl/7.62.0` |
+| HTTP Method & Path | `HEAD /` |
+
+## Validasi Socket Server
+```
+nc [IP_Group] 3407   
+```
+
+
+<img width="1252" height="712" alt="image" src="https://github.com/user-attachments/assets/f2c070f1-fa42-4a17-8a0d-bd49926ee2ca" />
+
+--
+
+## Kesimpulan Umum
+
+Analisis kasus menunjukkan eskalasi taktik serangan Eiri: dari *brute-force* web sederhana, pencurian data via *keylogger* fisik (USB HID), pencurian file via FTP, distribusi malware lewat HTTP dan SMB (*lateral movement*), ancaman pemerasan via email tanpa enkripsi, hingga penyamaran komunikasi C2 di balik kanal TLS. Setiap kasus dibuktikan langsung dari bukti paket mentah di Wireshark — baik lewat *display filter* spesifik, fitur **Follow Stream** untuk merekonstruksi percakapan penuh, maupun dekripsi TLS menggunakan *keylog file* — sehingga seluruh *Indicator of Compromise* (IP, kredensial, nama file, pesan tersembunyi) dapat diidentifikasi secara faktual dan dapat diverifikasi ulang.
+
+
+
