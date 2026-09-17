@@ -94,8 +94,8 @@ sysctl -w net.ipv4.ip_forward=1
 ```
 
 Verifikasi: client dari subnet berbeda dapat saling ping, contoh:
-- Chisa (`10.88.2.2`) → Alice (`10.88.1.2`) ✅
-- Knights (`10.88.3.2`) → Chisa (`10.88.2.2`) ✅
+- Chisa (`10.88.2.2`) → Alice (`10.88.1.2`) 
+- Knights (`10.88.3.2`) → Chisa (`10.88.2.2`) 
 
 ---
 
@@ -121,7 +121,7 @@ Ditambahkan sebagai `up` line di config box agar persisten:
 up echo nameserver 8.8.8.8 > /etc/resolv.conf
 ```
 
-Verifikasi: semua client dapat `ping 8.8.8.8` dan `ping google.com` ✅
+Verifikasi: semua client dapat `ping 8.8.8.8` dan `ping google.com` 
 
 ---
 
